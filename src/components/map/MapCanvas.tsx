@@ -30,7 +30,17 @@ function ClickHandler({ onPick }: { onPick: (coords: Coords) => void }) {
 function InitialFit() {
   const map = useMap();
   useEffect(() => {
-    map.fitBounds(TURKEY_BOUNDS, { padding: [16, 16], animate: false });
+    const fit = () => {
+      map.invalidateSize();
+      map.fitBounds(TURKEY_BOUNDS, { padding: [16, 16], animate: false });
+    };
+    fit();
+    const raf = requestAnimationFrame(fit);
+    const t = window.setTimeout(fit, 250);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(t);
+    };
   }, [map]);
   return null;
 }

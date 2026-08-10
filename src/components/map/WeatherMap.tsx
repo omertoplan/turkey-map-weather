@@ -22,7 +22,7 @@ function MapSkeleton() {
 /** SSR-safe boundary: Leaflet touches window at import time. */
 export function WeatherMap(props: Props) {
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0 isolate z-0">
       <ClientOnly fallback={<MapSkeleton />}>
         <Suspense fallback={<MapSkeleton />}>
           <MapCanvas {...props} />
