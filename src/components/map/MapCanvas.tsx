@@ -63,8 +63,9 @@ function CityChips({ cities, onPick }: { cities: CityWeather[]; onPick: (c: Coor
     <div className="pointer-events-none absolute inset-0 z-[500]">
       {visible.map((city) => {
         const p = map.latLngToContainerPoint([city.coords.lat, city.coords.lon]);
-        const w = map.getSize().x;
-        // keep edge chips fully on screen without moving the map
+        const { x: w, y: h } = map.getSize();
+        // drop chips that are off-screen, gently nudge the ones hugging an edge
+        if (p.x < -40 || p.x > w + 40 || p.y < -40 || p.y > h + 40) return null;
         const left = Math.min(Math.max(p.x, 62), Math.max(w - 62, 62));
         return (
           <button
