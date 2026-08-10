@@ -71,6 +71,12 @@ export function describeCoords(coords: Coords): { name: string; region: string }
     }
   }
   if (best < 22) return { name: nearest.name, region: nearest.region };
+  if (best > 150) {
+    return {
+      name: "Seçilen nokta",
+      region: `${coords.lat.toFixed(2)}°K, ${coords.lon.toFixed(2)}°D`,
+    };
+  }
   return {
     name: `${nearest.name} civarı`,
     region: `${nearest.region} · ${Math.round(best)} km`,

@@ -1,16 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { TurkeyMap } from "@/components/map/TurkeyMap";
+import { WeatherMap } from "@/components/map/WeatherMap";
 import { MapControls } from "@/components/map/MapControls";
 import { WeatherSheet } from "@/components/weather/WeatherSheet";
-import { isInsideTurkey } from "@/lib/map/turkey";
 import { weatherQueries } from "@/lib/weather";
 import type { Coords } from "@/lib/weather/types";
 
 const TITLE = "Hava Haritası — En iyi hava durumu uygulaması";
 const DESCRIPTION =
-  "Türkiye haritasını aç, şehirlerin anlık sıcaklığını gör ve haritada herhangi bir noktaya dokunarak saatlik, günlük ve haftalık hava tahminine ulaş.";
+  "Türkiye haritasını aç, şehirlerin anlık sıcaklığını gör ve haritada herhangi bir noktaya dokunarak gerçek saatlik, günlük ve haftalık hava tahminine ulaş.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -28,52 +27,75 @@ export const Route = createFileRoute("/")({
 
 function MapWeatherHome() {
   const [selected, setSelected] = useState<Coords | null>(null);
+  const [focus, setFocus] = useState<{ coords: Coords; zoom?: number } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  const { data: cities = [] } = useQuery(weatherQueries.cities());
+  const citiesQuery = useQuery(weatherQueries.cities());
   const pointQuery = useQuery({
     ...weatherQueries.point(selected ?? { lat: 0, lon: 0 }),
     enabled: selected !== null,
   });
 
   const pick = useCallback((coords: Coords) => {
-    if (!isInsideTurkey(coords)) return;
+    setNotice(null);
     setSelected(coords);
   }, []);
 
+  const pickAndFocus = useCallback(
+    (coords: Coords) => {
+      pick(coords);
+      setFocus({ coords, zoom: 9 });
+    },
+    [pick],
+  );
+
   const locate = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
-      pick({ lat: 41.01, lon: 28.98 });
+      setNotice("Bu cihazda konum servisi kullanılamıyor.");
       return;
     }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false);
-        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        if (isInsideTurkey(coords)) setSelected(coords);
-        else pick({ lat: 39.93, lon: 32.85 });
+        pickAndFocus({ lat: pos.coords.latitude, lon: pos.coords.longitude });
       },
       () => {
         setLocating(false);
-        pick({ lat: 41.01, lon: 28.98 });
+        setNotice("Konum izni verilmedi. Haritadan bir nokta seçebilirsin.");
       },
-      { timeout: 8000 },
+      { timeout: 8000, enableHighAccuracy: true },
     );
-  }, [pick]);
+  }, [pickAndFocus]);
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden">
       <h1 className="sr-only">Türkiye hava durumu haritası — En iyi hava durumu uygulaması</h1>
 
-      <TurkeyMap cities={cities} selected={selected} onPick={pick} />
+      <WeatherMap
+        cities={citiesQuery.data ?? []}
+        selected={selected}
+        focus={focus}
+        onPick={pick}
+      />
 
-      <MapControls onSelectPlace={pick} onLocate={locate} locating={locating} />
+      <MapControls onSelectPlace={pickAndFocus} onLocate={locate} locating={locating} />
+
+      {(notice || citiesQuery.isError) && (
+        <div className="pointer-events-none absolute inset-x-0 top-[4.75rem] z-30 flex justify-center px-6">
+          <p className="chip-glass rounded-full px-4 py-2 text-center text-[0.78rem] font-semibold text-foreground">
+            {notice ?? "Şehir verileri alınamadı. Bağlantını kontrol et."}
+          </p>
+        </div>
+      )}
 
       {!selected && (
         <div className="pointer-events-none absolute inset-x-0 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-20 flex justify-center px-6">
           <p className="chip-glass rounded-full px-4 py-2.5 text-center text-[0.82rem] font-semibold text-muted-foreground">
-            Haritada bir noktaya dokun → hava durumu
+            {citiesQuery.isPending
+              ? "Hava verileri yükleniyor…"
+              : "Haritada bir noktaya dokun → hava durumu"}
           </p>
         </div>
       )}
@@ -82,6 +104,7 @@ function MapWeatherHome() {
         <WeatherSheet
           snapshot={pointQuery.data}
           loading={pointQuery.isPending}
+          error={pointQuery.isError}
           onClose={() => setSelected(null)}
         />
       )}
