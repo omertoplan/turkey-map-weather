@@ -1,0 +1,99 @@
+import { useEffect, useRef, useState } from "react";
+import { LocateFixed, Search, X } from "lucide-react";
+import { PLACES, searchPlaces, type Place } from "@/lib/map/places";
+import type { Coords } from "@/lib/weather/types";
+import { cn } from "@/lib/utils";
+
+interface Props {
+  onSelectPlace: (coords: Coords) => void;
+  onLocate: () => void;
+  locating?: boolean;
+}
+
+export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+
+  const results: Place[] = query ? searchPlaces(query) : PLACES.filter((p) => p.priority === 1).slice(0, 5);
+
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4 pt-[max(0.85rem,env(safe-area-inset-top))]">
+      <div className="pointer-events-auto mx-auto flex max-w-md items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <div
+            className={cn(
+              "chip-glass flex items-center gap-2 rounded-2xl px-3 transition-all",
+              open ? "h-12" : "h-12",
+            )}
+          >
+            <Search className="size-[1.15rem] shrink-0 text-muted-foreground" strokeWidth={2.2} />
+            <input
+              ref={inputRef}
+              value={query}
+              onFocus={() => setOpen(true)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setOpen(true);
+              }}
+              placeholder="Şehir ara"
+              className="h-full min-w-0 flex-1 bg-transparent text-[0.95rem] font-medium text-foreground outline-none placeholder:text-muted-foreground/80"
+              aria-label="Şehir ara"
+            />
+            {open && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setOpen(false);
+                  inputRef.current?.blur();
+                }}
+                className="grid size-7 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-secondary"
+                aria-label="Aramayı kapat"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+
+          {open && (
+            <ul className="surface-card mt-2 overflow-hidden p-1">
+              {results.length === 0 && (
+                <li className="px-3 py-3 text-sm text-muted-foreground">Sonuç bulunamadı</li>
+              )}
+              {results.map((p) => (
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectPlace(p.coords);
+                      setQuery("");
+                      setOpen(false);
+                    }}
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary"
+                  >
+                    <span className="text-[0.95rem] font-semibold text-foreground">{p.name}</span>
+                    <span className="text-xs font-medium text-muted-foreground">{p.region}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={onLocate}
+          className="chip-glass grid size-12 shrink-0 place-items-center rounded-2xl text-primary transition-transform active:scale-95"
+          aria-label="Konumumu bul"
+        >
+          <LocateFixed className={cn("size-[1.3rem]", locating && "animate-spin")} strokeWidth={2.2} />
+        </button>
+      </div>
+    </div>
+  );
+}
