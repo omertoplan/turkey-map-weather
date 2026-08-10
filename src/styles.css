@@ -165,8 +165,54 @@
     border-color: var(--color-border);
   }
 
+  html,
   body {
-    background-color: var(--color-background);
+    overscroll-behavior: none;
+  }
+
+  body {
+    background: var(--gradient-sky);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 }
+
+@utility surface-card {
+  background-color: var(--color-card);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility chip-glass {
+  background-color: oklch(1 0 0 / 0.86);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-chip);
+}
+
+@utility sheet-shadow {
+  box-shadow: var(--shadow-sheet);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@utility pin-ring {
+  animation: pulse-ring 1.8s ease-out infinite;
+}
+
