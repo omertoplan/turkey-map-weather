@@ -16,10 +16,11 @@ const TABS: Array<{ key: TabKey; label: string }> = [
 interface Props {
   snapshot: WeatherSnapshot | undefined;
   loading: boolean;
+  error?: boolean;
   onClose: () => void;
 }
 
-export function WeatherSheet({ snapshot, loading, onClose }: Props) {
+export function WeatherSheet({ snapshot, loading, error, onClose }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<TabKey>("now");
   const dragStart = useRef<number | null>(null);
