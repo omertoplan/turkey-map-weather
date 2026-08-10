@@ -23,6 +23,21 @@ interface Fit {
   offsetY: number;
 }
 
+/** Presentation-only label nudges so edge cities never clip or collide. */
+const LABEL_ADJUST: Record<
+  string,
+  { anchor?: "left" | "center" | "right"; dx?: number; dy?: number }
+> = {
+  izmir: { anchor: "right", dx: -6 },
+  istanbul: { dy: -6 },
+  antalya: { anchor: "right", dx: -10, dy: 18 },
+  adana: { dy: -4 },
+  trabzon: { anchor: "left", dx: 10, dy: -4 },
+  konya: { dy: 8 },
+};
+
+
+
 /**
  * MAP ABSTRACTION POINT — stylised vector map of Türkiye.
  * Contract: renders city chips + selection pin, emits onPick({ lat, lon }).
