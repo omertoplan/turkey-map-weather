@@ -21,7 +21,7 @@ export const BOUNDS = {
 
 export const VIEW_WIDTH = 1000;
 export const VIEW_HEIGHT = Math.round(
-  (VIEW_WIDTH * (BOUNDS.maxLat - BOUNDS.minLat)) / (BOUNDS.maxLon - BOUNDS.minLon) / 0.6,
+  (VIEW_WIDTH * (BOUNDS.maxLat - BOUNDS.minLat)) / (BOUNDS.maxLon - BOUNDS.minLon) / 0.45,
 );
 
 /** lon/lat -> svg viewBox coordinates */
