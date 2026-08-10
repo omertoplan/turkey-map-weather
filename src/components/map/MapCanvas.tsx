@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import L from "leaflet";
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { WeatherIcon } from "@/components/weather/WeatherIcon";
-import { MAP_PROVIDER, TURKEY_BOUNDS, TURKEY_CENTER, TURKEY_ZOOM } from "@/lib/map/provider";
+import { MAP_PROVIDER, TURKEY_BOUNDS, TURKEY_CENTER } from "@/lib/map/provider";
 import type { CityWeather, Coords } from "@/lib/weather/types";
 
 interface Props {
