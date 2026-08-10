@@ -164,6 +164,9 @@ export function TurkeyMap({ cities, selected, onPick }: Props) {
           .filter((c) => isInsideTurkey(c.coords))
           .map((city) => {
             const { left, top } = toPx(city.coords);
+            const adj = LABEL_ADJUST[city.id] ?? {};
+            const anchorX =
+              adj.anchor === "right" ? "0%" : adj.anchor === "left" ? "-100%" : "-50%";
             return (
               <button
                 key={city.id}
@@ -172,9 +175,14 @@ export function TurkeyMap({ cities, selected, onPick }: Props) {
                   e.stopPropagation();
                   onPick(city.coords);
                 }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 transition-transform active:scale-95"
-                style={{ left, top }}
+                className="absolute transition-transform active:scale-95"
+                style={{
+                  left,
+                  top,
+                  transform: `translate(calc(${anchorX} + ${adj.dx ?? 0}px), calc(-50% + ${adj.dy ?? 0}px))`,
+                }}
               >
+
                 <span className="chip-glass flex items-center gap-1.5 rounded-full py-1 pl-1.5 pr-2.5">
                   <WeatherIcon condition={city.condition} size={20} />
                   <span className="text-[0.8rem] font-extrabold leading-none text-foreground">
