@@ -63,6 +63,9 @@ function CityChips({ cities, onPick }: { cities: CityWeather[]; onPick: (c: Coor
     <div className="pointer-events-none absolute inset-0 z-[500]">
       {visible.map((city) => {
         const p = map.latLngToContainerPoint([city.coords.lat, city.coords.lon]);
+        const w = map.getSize().x;
+        // keep edge chips fully on screen without moving the map
+        const left = Math.min(Math.max(p.x, 62), Math.max(w - 62, 62));
         return (
           <button
             key={city.id}
@@ -72,7 +75,7 @@ function CityChips({ cities, onPick }: { cities: CityWeather[]; onPick: (c: Coor
               onPick(city.coords);
             }}
             className="pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2 transition-transform active:scale-95"
-            style={{ left: p.x, top: p.y }}
+            style={{ left, top: p.y }}
           >
             <span className="chip-glass flex items-center gap-1.5 rounded-full py-1 pl-1.5 pr-2.5">
               <WeatherIcon condition={city.condition} size={20} />
