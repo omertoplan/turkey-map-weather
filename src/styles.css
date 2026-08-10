@@ -19,6 +19,7 @@
  */
 
 @theme inline {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -26,6 +27,15 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --color-sky: var(--sky);
+  --color-sky-deep: var(--sky-deep);
+  --color-sun: var(--sun);
+  --color-rain: var(--rain);
+  --color-land: var(--land);
+  --color-land-edge: var(--land-edge);
+  --color-sea: var(--sea);
+  --color-highland: var(--highland);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -62,26 +72,43 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --radius: 1.125rem;
+  --background: oklch(0.985 0.008 240);
+  --foreground: oklch(0.28 0.05 250);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground: oklch(0.28 0.05 250);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --popover-foreground: oklch(0.28 0.05 250);
+  --primary: oklch(0.62 0.16 244);
+  --primary-foreground: oklch(0.99 0.005 240);
+  --secondary: oklch(0.955 0.018 240);
+  --secondary-foreground: oklch(0.4 0.07 248);
+  --muted: oklch(0.962 0.012 240);
+  --muted-foreground: oklch(0.585 0.032 250);
+  --accent: oklch(0.93 0.045 232);
+  --accent-foreground: oklch(0.36 0.09 248);
+  --destructive: oklch(0.63 0.2 25);
+  --destructive-foreground: oklch(0.99 0.005 240);
+  --border: oklch(0.925 0.014 245);
+  --input: oklch(0.925 0.014 245);
+  --ring: oklch(0.7 0.11 244);
+
+  /* weather palette */
+  --sky: oklch(0.88 0.06 232);
+  --sky-deep: oklch(0.62 0.16 244);
+  --sun: oklch(0.83 0.15 82);
+  --rain: oklch(0.68 0.11 238);
+  --land: oklch(0.965 0.017 128);
+  --land-edge: oklch(0.87 0.03 200);
+  --sea: oklch(0.955 0.028 226);
+  --highland: oklch(0.945 0.03 110);
+
+  --gradient-sky: linear-gradient(180deg, oklch(0.97 0.03 230) 0%, oklch(0.94 0.035 220) 100%);
+  --gradient-accent: linear-gradient(135deg, oklch(0.7 0.13 240), oklch(0.78 0.1 210));
+  --shadow-soft: 0 1px 2px oklch(0.4 0.06 250 / 0.06), 0 6px 18px oklch(0.4 0.06 250 / 0.08);
+  --shadow-chip: 0 1px 1px oklch(0.4 0.06 250 / 0.05), 0 3px 10px oklch(0.4 0.06 250 / 0.1);
+  --shadow-sheet: 0 -2px 10px oklch(0.4 0.06 250 / 0.06), 0 -18px 50px oklch(0.4 0.06 250 / 0.14);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -96,6 +123,7 @@
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
 }
+
 
 .dark {
   --background: oklch(0.129 0.042 264.695);
@@ -137,8 +165,54 @@
     border-color: var(--color-border);
   }
 
+  html,
   body {
-    background-color: var(--color-background);
+    overscroll-behavior: none;
+  }
+
+  body {
+    background: var(--gradient-sky);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 }
+
+@utility surface-card {
+  background-color: var(--color-card);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility chip-glass {
+  background-color: oklch(1 0 0 / 0.86);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-chip);
+}
+
+@utility sheet-shadow {
+  box-shadow: var(--shadow-sheet);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@utility pin-ring {
+  animation: pulse-ring 1.8s ease-out infinite;
+}
+
