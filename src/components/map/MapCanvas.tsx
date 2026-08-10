@@ -115,6 +115,9 @@ export default function MapCanvas({ cities, selected, focus, onPick }: Props) {
       minZoom={4}
       maxZoom={MAP_PROVIDER.maxZoom}
       zoomControl={false}
+      zoomSnap={0.1}
+      zoomDelta={0.5}
+      wheelPxPerZoomLevel={90}
       attributionControl
       className="absolute inset-0 h-full w-full bg-secondary"
     >
