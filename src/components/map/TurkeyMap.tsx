@@ -93,7 +93,7 @@ export function TurkeyMap({ cities, selected, onPick }: Props) {
     <div
       ref={boxRef}
       onClick={handleClick}
-      className="absolute inset-x-0 bottom-[26%] top-[4%] touch-manipulation select-none"
+      className="absolute inset-x-0 bottom-[34%] top-[7%] touch-manipulation select-none"
       role="application"
       aria-label="Türkiye hava durumu haritası — bir noktaya dokunun"
     >
