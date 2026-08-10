@@ -26,6 +26,15 @@ function ClickHandler({ onPick }: { onPick: (coords: Coords) => void }) {
   return null;
 }
 
+/** Fit all of Türkiye on first render, whatever the viewport aspect. */
+function InitialFit() {
+  const map = useMap();
+  useEffect(() => {
+    map.fitBounds(TURKEY_BOUNDS, { padding: [16, 16], animate: false });
+  }, [map]);
+  return null;
+}
+
 function Flyer({ focus }: { focus: Props["focus"] }) {
   const map = useMap();
   useEffect(() => {
@@ -87,9 +96,8 @@ function CityChips({ cities, onPick }: { cities: CityWeather[]; onPick: (c: Coor
 export default function MapCanvas({ cities, selected, focus, onPick }: Props) {
   return (
     <MapContainer
-      bounds={TURKEY_BOUNDS}
-      boundsOptions={{ padding: [24, 24] }}
       center={TURKEY_CENTER}
+      zoom={6}
       minZoom={4}
       maxZoom={MAP_PROVIDER.maxZoom}
       zoomControl={false}
@@ -103,6 +111,7 @@ export default function MapCanvas({ cities, selected, focus, onPick }: Props) {
         maxZoom={MAP_PROVIDER.maxZoom}
         detectRetina
       />
+      <InitialFit />
       <ClickHandler onPick={onPick} />
       <Flyer focus={focus} />
       {selected && <Marker position={[selected.lat, selected.lon]} icon={pinIcon} />}
