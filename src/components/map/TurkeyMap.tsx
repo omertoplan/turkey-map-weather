@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { WeatherIcon } from "./WeatherIcon";
+import { WeatherIcon } from "@/components/weather/WeatherIcon";
 import {
   TERRAIN_BLOBS,
   TURKEY_OUTLINE,
