@@ -87,9 +87,9 @@ function CityChips({ cities, onPick }: { cities: CityWeather[]; onPick: (c: Coor
 export default function MapCanvas({ cities, selected, focus, onPick }: Props) {
   return (
     <MapContainer
-      center={TURKEY_CENTER}
-      zoom={TURKEY_ZOOM}
       bounds={TURKEY_BOUNDS}
+      boundsOptions={{ padding: [24, 24] }}
+      center={TURKEY_CENTER}
       minZoom={4}
       maxZoom={MAP_PROVIDER.maxZoom}
       zoomControl={false}
