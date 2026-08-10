@@ -91,7 +91,13 @@ export function WeatherSheet({ snapshot, loading, error, onClose }: Props) {
         </div>
       </div>
 
-      {loading || !snapshot ? (
+      {error ? (
+        <div className="px-5 pb-8 pt-4">
+          <p className="rounded-2xl bg-secondary px-4 py-3 text-center text-[0.85rem] font-semibold text-muted-foreground">
+            Hava verisi alınamadı. İnternet bağlantını kontrol edip tekrar dene.
+          </p>
+        </div>
+      ) : loading || !snapshot ? (
         <div className="space-y-3 px-5 pb-8 pt-4">
           <div className="h-16 animate-pulse rounded-2xl bg-secondary" />
           <div className="h-16 animate-pulse rounded-2xl bg-secondary" />
