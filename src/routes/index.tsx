@@ -122,9 +122,13 @@ function MapWeatherHome() {
       {selected && (
         <WeatherSheet
           snapshot={pointQuery.data}
+          label={label}
           loading={pointQuery.isPending}
           error={pointQuery.isError}
-          onClose={() => setSelected(null)}
+          onClose={() => {
+            setSelected(null);
+            setPickedLabel(null);
+          }}
         />
       )}
     </main>
