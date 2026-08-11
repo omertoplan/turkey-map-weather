@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { LocateFixed, Search, X } from "lucide-react";
-import { PLACES, searchPlaces, type Place } from "@/lib/map/places";
+import { PLACES } from "@/lib/map/places";
+import { searchGeoPlaces, type GeoResult } from "@/lib/map/geocode";
 import type { Coords } from "@/lib/weather/types";
 import { cn } from "@/lib/utils";
 
@@ -10,16 +12,36 @@ interface Props {
   locating?: boolean;
 }
 
+const DEFAULTS: GeoResult[] = PLACES.filter((p) => p.priority === 1)
+  .slice(0, 5)
+  .map((p) => ({ id: p.id, name: p.name, subtitle: p.region, coords: p.coords }));
+
 export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [debounced, setDebounced] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  const results: Place[] = query ? searchPlaces(query) : PLACES.filter((p) => p.priority === 1).slice(0, 5);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query.trim()), 280);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const searchQuery = useQuery({
+    queryKey: ["geocode", debounced],
+    queryFn: () => searchGeoPlaces(debounced),
+    enabled: debounced.length >= 2,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+  const searching = debounced.length >= 2;
+  const results: GeoResult[] = searching ? (searchQuery.data ?? []) : DEFAULTS;
+
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4 pt-[max(0.85rem,env(safe-area-inset-top))]">
