@@ -71,12 +71,13 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
             <div className="flex items-center gap-1.5 text-primary">
               <MapPin className="size-4 shrink-0" strokeWidth={2.4} />
               <h2 className="truncate text-[1.05rem] font-extrabold tracking-tight text-foreground">
-                {snapshot?.location.name ?? "Yükleniyor…"}
+                {title ?? "Yükleniyor…"}
               </h2>
             </div>
             <p className="mt-0.5 truncate pl-[1.4rem] text-xs font-medium text-muted-foreground">
-              {snapshot?.location.region ?? "\u00a0"}
+              {subtitle ?? "\u00a0"}
             </p>
+
           </div>
           <button
             type="button"
