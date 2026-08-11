@@ -15,20 +15,26 @@ const TABS: Array<{ key: TabKey; label: string }> = [
 
 interface Props {
   snapshot: WeatherSnapshot | undefined;
+  /** resolved human-readable label (search result or reverse geocode) */
+  label?: { name: string; region: string } | null;
   loading: boolean;
   error?: boolean;
   onClose: () => void;
 }
 
-export function WeatherSheet({ snapshot, loading, error, onClose }: Props) {
+export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<TabKey>("now");
   const dragStart = useRef<number | null>(null);
 
+  const title = label?.name ?? snapshot?.location.name;
+  const subtitle = label?.region ?? snapshot?.location.region;
+
   useEffect(() => {
     setExpanded(false);
     setTab("now");
-  }, [snapshot?.location.name, snapshot?.location.coords.lat]);
+  }, [snapshot?.location.coords.lat, snapshot?.location.coords.lon]);
+
 
   const onPointerDown = (e: React.PointerEvent) => {
     dragStart.current = e.clientY;
@@ -65,12 +71,13 @@ export function WeatherSheet({ snapshot, loading, error, onClose }: Props) {
             <div className="flex items-center gap-1.5 text-primary">
               <MapPin className="size-4 shrink-0" strokeWidth={2.4} />
               <h2 className="truncate text-[1.05rem] font-extrabold tracking-tight text-foreground">
-                {snapshot?.location.name ?? "Yükleniyor…"}
+                {title ?? "Yükleniyor…"}
               </h2>
             </div>
             <p className="mt-0.5 truncate pl-[1.4rem] text-xs font-medium text-muted-foreground">
-              {snapshot?.location.region ?? "\u00a0"}
+              {subtitle ?? "\u00a0"}
             </p>
+
           </div>
           <button
             type="button"

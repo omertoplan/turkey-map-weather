@@ -5,6 +5,7 @@ import { WeatherMap } from "@/components/map/WeatherMap";
 import { MapControls } from "@/components/map/MapControls";
 import { WeatherSheet } from "@/components/weather/WeatherSheet";
 import { weatherQueries } from "@/lib/weather";
+import { reverseGeocode, type PlaceLabel } from "@/lib/map/geocode";
 import type { Coords } from "@/lib/weather/types";
 
 const TITLE = "Hava Haritası — En iyi hava durumu uygulaması";
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/")({
 
 function MapWeatherHome() {
   const [selected, setSelected] = useState<Coords | null>(null);
+  const [pickedLabel, setPickedLabel] = useState<PlaceLabel | null>(null);
   const [focus, setFocus] = useState<{ coords: Coords; zoom?: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -37,14 +39,30 @@ function MapWeatherHome() {
     enabled: selected !== null,
   });
 
-  const pick = useCallback((coords: Coords) => {
+  // reverse geocode only when we don't already have a label from search
+  const reverseQuery = useQuery({
+    queryKey: [
+      "reverse-geocode",
+      selected?.lat.toFixed(4) ?? "",
+      selected?.lon.toFixed(4) ?? "",
+    ],
+    queryFn: () => reverseGeocode(selected!),
+    enabled: selected !== null && pickedLabel === null,
+    staleTime: 30 * 60_000,
+    retry: 1,
+  });
+
+  const label = pickedLabel ?? reverseQuery.data ?? null;
+
+  const pick = useCallback((coords: Coords, nextLabel?: PlaceLabel) => {
     setNotice(null);
+    setPickedLabel(nextLabel ?? null);
     setSelected(coords);
   }, []);
 
   const pickAndFocus = useCallback(
-    (coords: Coords) => {
-      pick(coords);
+    (coords: Coords, nextLabel?: PlaceLabel) => {
+      pick(coords, nextLabel);
       setFocus({ coords, zoom: 9 });
     },
     [pick],
@@ -59,7 +77,7 @@ function MapWeatherHome() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false);
-        pickAndFocus({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        pickAndFocus({ lat: pos.coords.latitude, lon: pos.coords.longitude }, undefined);
       },
       () => {
         setLocating(false);
@@ -68,6 +86,7 @@ function MapWeatherHome() {
       { timeout: 8000, enableHighAccuracy: true },
     );
   }, [pickAndFocus]);
+
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden">
@@ -103,9 +122,13 @@ function MapWeatherHome() {
       {selected && (
         <WeatherSheet
           snapshot={pointQuery.data}
+          label={label}
           loading={pointQuery.isPending}
           error={pointQuery.isError}
-          onClose={() => setSelected(null)}
+          onClose={() => {
+            setSelected(null);
+            setPickedLabel(null);
+          }}
         />
       )}
     </main>
