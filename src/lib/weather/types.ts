@@ -55,6 +55,8 @@ export interface HourlyEntry {
   temp: number;
   condition: WeatherCondition;
   precipitationProbability: number;
+  windSpeed: number;
+  windDirection: string;
 }
 
 export interface DailyEntry {
@@ -65,7 +67,10 @@ export interface DailyEntry {
   max: number;
   condition: WeatherCondition;
   precipitationProbability: number;
+  windSpeedMax: number;
+  windDirection: string;
 }
+
 
 export interface WeatherSnapshot {
   location: {
