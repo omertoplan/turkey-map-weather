@@ -80,8 +80,8 @@ export const openMeteoProvider: WeatherProvider = {
     const url =
       `${BASE}?latitude=${coords.lat.toFixed(4)}&longitude=${coords.lon.toFixed(4)}` +
       `&current=${CURRENT_FIELDS}` +
-      `&hourly=temperature_2m,weather_code,precipitation_probability,visibility` +
-      `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset` +
+      `&hourly=temperature_2m,weather_code,precipitation_probability,visibility,wind_speed_10m,wind_direction_10m` +
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset,wind_speed_10m_max,wind_direction_10m_dominant` +
       `&timezone=auto&forecast_days=7`;
 
     const data = await getJson<ForecastResponse>(url);
@@ -101,6 +101,8 @@ export const openMeteoProvider: WeatherProvider = {
         temp: round(h["temperature_2m"]?.[idx] as number),
         condition: conditionFromCode(round(h["weather_code"]?.[idx] as number)),
         precipitationProbability: round(h["precipitation_probability"]?.[idx] as number),
+        windSpeed: round(h["wind_speed_10m"]?.[idx] as number),
+        windDirection: windDir(round(h["wind_direction_10m"]?.[idx] as number)),
       };
     });
 
@@ -112,7 +114,10 @@ export const openMeteoProvider: WeatherProvider = {
       max: round(d["temperature_2m_max"]?.[i] as number),
       condition: conditionFromCode(round(d["weather_code"]?.[i] as number)),
       precipitationProbability: round(d["precipitation_probability_max"]?.[i] as number),
+      windSpeedMax: round(d["wind_speed_10m_max"]?.[i] as number),
+      windDirection: windDir(round(d["wind_direction_10m_dominant"]?.[i] as number)),
     }));
+
 
     const visibilityM = h["visibility"]?.[start] as number | undefined;
 
