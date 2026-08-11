@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { LocateFixed, Search, X } from "lucide-react";
 import { PLACES } from "@/lib/map/places";
-import { searchGeoPlaces, type GeoResult } from "@/lib/map/geocode";
+import { labelFromGeoResult, searchGeoPlaces, type GeoResult } from "@/lib/map/geocode";
 import type { Coords } from "@/lib/weather/types";
 import { cn } from "@/lib/utils";
 
@@ -101,7 +101,7 @@ export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
                   <button
                     type="button"
                     onClick={() => {
-                      onSelectPlace(p.coords);
+                      onSelectPlace(p.coords, labelFromGeoResult(p));
                       setQuery("");
                       setOpen(false);
                     }}
