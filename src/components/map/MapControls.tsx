@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { LocateFixed, Search, X } from "lucide-react";
-import { PLACES, searchPlaces, type Place } from "@/lib/map/places";
+import { PLACES } from "@/lib/map/places";
+import { searchGeoPlaces, type GeoResult } from "@/lib/map/geocode";
 import type { Coords } from "@/lib/weather/types";
 import { cn } from "@/lib/utils";
 
@@ -10,16 +12,36 @@ interface Props {
   locating?: boolean;
 }
 
+const DEFAULTS: GeoResult[] = PLACES.filter((p) => p.priority === 1)
+  .slice(0, 5)
+  .map((p) => ({ id: p.id, name: p.name, subtitle: p.region, coords: p.coords }));
+
 export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [debounced, setDebounced] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  const results: Place[] = query ? searchPlaces(query) : PLACES.filter((p) => p.priority === 1).slice(0, 5);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query.trim()), 280);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const searchQuery = useQuery({
+    queryKey: ["geocode", debounced],
+    queryFn: () => searchGeoPlaces(debounced),
+    enabled: debounced.length >= 2,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+  const searching = debounced.length >= 2;
+  const results: GeoResult[] = searching ? (searchQuery.data ?? []) : DEFAULTS;
+
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4 pt-[max(0.85rem,env(safe-area-inset-top))]">
@@ -62,7 +84,15 @@ export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
 
           {open && (
             <ul className="surface-card mt-2 overflow-hidden p-1">
-              {results.length === 0 && (
+              {searching && searchQuery.isPending && (
+                <li className="px-3 py-3 text-sm text-muted-foreground">Aranıyor…</li>
+              )}
+              {searching && searchQuery.isError && (
+                <li className="px-3 py-3 text-sm text-muted-foreground">
+                  Arama yapılamadı. Bağlantını kontrol et.
+                </li>
+              )}
+              {!searchQuery.isPending && !searchQuery.isError && results.length === 0 && (
                 <li className="px-3 py-3 text-sm text-muted-foreground">Sonuç bulunamadı</li>
               )}
               {results.map((p) => (
@@ -74,15 +104,20 @@ export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
                       setQuery("");
                       setOpen(false);
                     }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary"
+                    className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary"
                   >
-                    <span className="text-[0.95rem] font-semibold text-foreground">{p.name}</span>
-                    <span className="text-xs font-medium text-muted-foreground">{p.region}</span>
+                    <span className="truncate text-[0.95rem] font-semibold text-foreground">
+                      {p.name}
+                    </span>
+                    <span className="shrink-0 truncate text-xs font-medium text-muted-foreground">
+                      {p.subtitle}
+                    </span>
                   </button>
                 </li>
               ))}
             </ul>
           )}
+
         </div>
 
         <button

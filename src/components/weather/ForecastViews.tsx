@@ -78,19 +78,27 @@ export function HourlyList({ snapshot }: { snapshot: WeatherSnapshot }) {
   return (
     <div className="divide-y divide-border/70">
       {snapshot.hourly.map((h, i) => (
-        <div key={`${h.time}-${i}`} className="flex items-center gap-3 py-2.5">
-          <span className="w-12 text-[0.85rem] font-bold text-foreground">
+        <div key={`${h.time}-${i}`} className="flex items-center gap-2.5 py-2.5">
+          <span className="w-12 shrink-0 text-[0.85rem] font-bold text-foreground">
             {i === 0 ? "Şimdi" : h.time}
           </span>
           <WeatherIcon condition={h.condition} size={28} />
-          <span className="flex-1 text-[0.78rem] font-medium text-muted-foreground">
-            {CONDITION_LABEL_TR[h.condition]}
-          </span>
-          <span className="flex w-14 items-center justify-end gap-1 text-[0.78rem] font-semibold text-rain">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[0.78rem] font-medium text-muted-foreground">
+              {CONDITION_LABEL_TR[h.condition]}
+            </p>
+            <p className="mt-0.5 flex items-center gap-1 text-[0.72rem] font-semibold text-muted-foreground">
+              <Wind className="size-3 shrink-0" strokeWidth={2.4} />
+              {h.windSpeed} km/sa {h.windDirection}
+            </p>
+          </div>
+          <span className="flex w-12 shrink-0 items-center justify-end gap-1 text-[0.78rem] font-semibold text-rain">
             <Droplets className="size-3.5" strokeWidth={2.4} />
             {h.precipitationProbability}%
           </span>
-          <span className="w-10 text-right text-[1rem] font-bold text-foreground">{h.temp}°</span>
+          <span className="w-10 shrink-0 text-right text-[1rem] font-bold text-foreground">
+            {h.temp}°
+          </span>
         </div>
       ))}
     </div>
@@ -109,14 +117,20 @@ export function DailyList({ snapshot, days }: { snapshot: WeatherSnapshot; days:
         const left = ((d.min - min) / span) * 100;
         const width = ((d.max - d.min) / span) * 100;
         return (
-          <div key={d.date} className="flex items-center gap-3 py-3">
-            <span className="w-20 truncate text-[0.85rem] font-bold text-foreground">{d.label}</span>
+          <div key={d.date} className="flex items-center gap-2.5 py-3">
+            <div className="w-[5.5rem] shrink-0">
+              <p className="truncate text-[0.85rem] font-bold text-foreground">{d.label}</p>
+              <p className="mt-0.5 flex items-center gap-1 text-[0.7rem] font-semibold text-muted-foreground">
+                <Wind className="size-3 shrink-0" strokeWidth={2.4} />
+                {d.windSpeedMax} km/sa {d.windDirection}
+              </p>
+            </div>
             <WeatherIcon condition={d.condition} size={28} />
-            <span className="flex w-12 items-center gap-1 text-[0.75rem] font-semibold text-rain">
+            <span className="flex w-11 shrink-0 items-center gap-1 text-[0.75rem] font-semibold text-rain">
               <Droplets className="size-3" strokeWidth={2.4} />
               {d.precipitationProbability}%
             </span>
-            <span className="w-8 text-right text-[0.9rem] font-semibold text-muted-foreground">
+            <span className="w-8 shrink-0 text-right text-[0.9rem] font-semibold text-muted-foreground">
               {d.min}°
             </span>
             <div className="relative h-1.5 flex-1 rounded-full bg-secondary">
@@ -129,10 +143,13 @@ export function DailyList({ snapshot, days }: { snapshot: WeatherSnapshot; days:
                 }}
               />
             </div>
-            <span className="w-8 text-right text-[0.9rem] font-bold text-foreground">{d.max}°</span>
+            <span className="w-8 shrink-0 text-right text-[0.9rem] font-bold text-foreground">
+              {d.max}°
+            </span>
           </div>
         );
       })}
     </div>
   );
 }
+
