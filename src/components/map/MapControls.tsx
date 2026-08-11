@@ -84,7 +84,15 @@ export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
 
           {open && (
             <ul className="surface-card mt-2 overflow-hidden p-1">
-              {results.length === 0 && (
+              {searching && searchQuery.isPending && (
+                <li className="px-3 py-3 text-sm text-muted-foreground">Aranıyor…</li>
+              )}
+              {searching && searchQuery.isError && (
+                <li className="px-3 py-3 text-sm text-muted-foreground">
+                  Arama yapılamadı. Bağlantını kontrol et.
+                </li>
+              )}
+              {!searchQuery.isPending && !searchQuery.isError && results.length === 0 && (
                 <li className="px-3 py-3 text-sm text-muted-foreground">Sonuç bulunamadı</li>
               )}
               {results.map((p) => (
@@ -96,15 +104,20 @@ export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
                       setQuery("");
                       setOpen(false);
                     }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary"
+                    className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary"
                   >
-                    <span className="text-[0.95rem] font-semibold text-foreground">{p.name}</span>
-                    <span className="text-xs font-medium text-muted-foreground">{p.region}</span>
+                    <span className="truncate text-[0.95rem] font-semibold text-foreground">
+                      {p.name}
+                    </span>
+                    <span className="shrink-0 truncate text-xs font-medium text-muted-foreground">
+                      {p.subtitle}
+                    </span>
                   </button>
                 </li>
               ))}
             </ul>
           )}
+
         </div>
 
         <button
