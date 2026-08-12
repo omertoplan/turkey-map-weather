@@ -25,8 +25,9 @@ interface Props {
 export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<TabKey>("now");
-  const dragStart = useRef<number | null>(null);
+  const startY = useRef<number | null>(null);
   const lastY = useRef(0);
+
 
   const title = label?.name ?? snapshot?.location.name;
   const subtitle = label?.region ?? snapshot?.location.region;
@@ -37,49 +38,62 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
   }, [snapshot?.location.coords.lat, snapshot?.location.coords.lon]);
 
 
-  const THRESHOLD = 48;
+  const TAP_MAX = 12;
+  const SWIPE_MIN = 32;
 
   const isInteractive = (target: EventTarget | null) =>
     target instanceof Element &&
     !!target.closest("button, a, input, [role='tablist'], [data-no-drag]");
 
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (isInteractive(e.target)) {
-      dragStart.current = null;
+  const begin = (target: EventTarget | null, y: number) => {
+    if (isInteractive(target)) {
+      startY.current = null;
       return;
     }
-    dragStart.current = e.clientY;
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
+    startY.current = y;
+    lastY.current = y;
+  };
+
+  const move = (y: number) => {
+    if (startY.current === null) return;
+    lastY.current = y;
+  };
+
+  const finish = () => {
+    if (startY.current === null) return;
+    const dy = lastY.current - startY.current;
+    startY.current = null;
+    if (Math.abs(dy) <= TAP_MAX) {
+      setExpanded((v) => !v); // short tap toggles
+    } else if (Math.abs(dy) >= SWIPE_MIN) {
+      setExpanded(dy < 0);
     }
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (dragStart.current === null) return;
-    lastY.current = e.clientY;
-    const dy = e.clientY - dragStart.current;
-    if (Math.abs(dy) < THRESHOLD) return;
-    dragStart.current = null;
-    setExpanded(dy < 0);
-  };
-  const endDrag = () => {
-    dragStart.current = null;
-  };
-  // the browser can abort a pointer sequence mid-gesture; honour the movement so far
-  const onPointerCancel = () => {
-    if (dragStart.current === null) return;
-    const dy = lastY.current - dragStart.current;
-    dragStart.current = null;
-    if (Math.abs(dy) >= 32) setExpanded(dy < 0);
   };
 
   const dragProps = {
-    onPointerDown,
-    onPointerMove,
-    onPointerUp: endDrag,
-    onPointerCancel,
+    // native single-finger touch events
+    onTouchStart: (e: React.TouchEvent) => {
+      if (e.touches.length !== 1) {
+        startY.current = null;
+        return;
+      }
+      begin(e.target, e.touches[0]!.clientY);
+    },
+    onTouchMove: (e: React.TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      move(e.touches[0]!.clientY);
+    },
+    onTouchEnd: finish,
+    onTouchCancel: finish,
+    // mouse / pen fallback
+    onMouseDown: (e: React.MouseEvent) => begin(e.target, e.clientY),
+    onMouseMove: (e: React.MouseEvent) => move(e.clientY),
+    onMouseUp: finish,
+    onMouseLeave: () => {
+      startY.current = null;
+    },
   };
+
 
 
 
@@ -94,7 +108,7 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
       aria-label="Konum hava durumu"
     >
       {/* grabber / header */}
-      <div className="shrink-0 cursor-grab touch-none px-5 pt-2.5" {...dragProps}>
+      <div className="shrink-0 cursor-grab touch-manipulation px-5 pt-2.5" {...dragProps}>
 
         <div className="mx-auto h-1.5 w-11 rounded-full bg-border" />
         <div className="mt-3 flex items-start gap-2">
@@ -142,7 +156,7 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
         </div>
       ) : expanded ? (
         <>
-          <div className="shrink-0 touch-none px-5 pt-4" {...dragProps}>
+          <div className="shrink-0 touch-manipulation px-5 pt-4" {...dragProps}>
             <CurrentSummary snapshot={snapshot} />
             <div className="no-scrollbar mt-4 flex gap-1.5 overflow-x-auto rounded-full bg-secondary p-1">
               {TABS.map((t) => (
