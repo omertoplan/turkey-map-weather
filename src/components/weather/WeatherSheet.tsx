@@ -26,6 +26,7 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<TabKey>("now");
   const dragStart = useRef<number | null>(null);
+  const lastY = useRef(0);
 
   const title = label?.name ?? snapshot?.location.name;
   const subtitle = label?.region ?? snapshot?.location.region;
@@ -36,19 +37,52 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
   }, [snapshot?.location.coords.lat, snapshot?.location.coords.lon]);
 
 
+  const THRESHOLD = 48;
+
+  const isInteractive = (target: EventTarget | null) =>
+    target instanceof Element &&
+    !!target.closest("button, a, input, [role='tablist'], [data-no-drag]");
+
   const onPointerDown = (e: React.PointerEvent) => {
+    if (isInteractive(e.target)) {
+      dragStart.current = null;
+      return;
+    }
     dragStart.current = e.clientY;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
   };
-  const onPointerUp = (e: React.PointerEvent) => {
+  const onPointerMove = (e: React.PointerEvent) => {
     if (dragStart.current === null) return;
+    lastY.current = e.clientY;
     const dy = e.clientY - dragStart.current;
+    if (Math.abs(dy) < THRESHOLD) return;
     dragStart.current = null;
-    if (dy < -32) setExpanded(true);
-    else if (dy > 32) {
-      if (expanded) setExpanded(false);
-      else onClose();
-    } else setExpanded((v) => !v);
+    setExpanded(dy < 0);
   };
+  const endDrag = () => {
+    dragStart.current = null;
+  };
+  // the browser can abort a pointer sequence mid-gesture; honour the movement so far
+  const onPointerCancel = () => {
+    if (dragStart.current === null) return;
+    const dy = lastY.current - dragStart.current;
+    dragStart.current = null;
+    if (Math.abs(dy) >= 32) setExpanded(dy < 0);
+  };
+
+  const dragProps = {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp: endDrag,
+    onPointerCancel,
+  };
+
+
+
 
   return (
     <div
@@ -60,11 +94,8 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
       aria-label="Konum hava durumu"
     >
       {/* grabber / header */}
-      <div
-        className="shrink-0 cursor-grab touch-none px-5 pt-2.5"
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-      >
+      <div className="shrink-0 cursor-grab touch-none px-5 pt-2.5" {...dragProps}>
+
         <div className="mx-auto h-1.5 w-11 rounded-full bg-border" />
         <div className="mt-3 flex items-start gap-2">
           <div className="min-w-0 flex-1">
@@ -111,7 +142,7 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
         </div>
       ) : expanded ? (
         <>
-          <div className="shrink-0 px-5 pt-4">
+          <div className="shrink-0 touch-none px-5 pt-4" {...dragProps}>
             <CurrentSummary snapshot={snapshot} />
             <div className="no-scrollbar mt-4 flex gap-1.5 overflow-x-auto rounded-full bg-secondary p-1">
               {TABS.map((t) => (
@@ -139,7 +170,10 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
           </div>
         </>
       ) : (
-        <div className="space-y-3 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4">
+        <div
+          className="touch-pan-y space-y-3 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4"
+          {...dragProps}
+        >
           <CurrentSummary snapshot={snapshot} />
           <MetricRow snapshot={snapshot} />
           <button
