@@ -71,7 +71,7 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
     if (dragStart.current === null) return;
     const dy = lastY.current - dragStart.current;
     dragStart.current = null;
-    if (Math.abs(dy) >= 20) setExpanded(dy < 0);
+    if (Math.abs(dy) >= 32) setExpanded(dy < 0);
   };
 
   const dragProps = {
