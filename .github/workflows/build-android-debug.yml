@@ -11,11 +11,10 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22'
-          cache: npm
+          bun-version: latest
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -24,10 +23,10 @@ jobs:
           java-version: '21'
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Build web app
-        run: npm run build
+        run: bun run build
 
       - name: Find web build directory
         shell: bash
@@ -36,6 +35,7 @@ jobs:
           INDEX_PATH="$(find . -type f -name index.html -not -path './node_modules/*' -not -path './android/*' | head -n 1)"
           if [ -z "$INDEX_PATH" ]; then
             echo "No static index.html was produced by the web build."
+            echo "Candidate build folders:"
             find . -maxdepth 3 -type d \( -name dist -o -name .output -o -name build \) -print || true
             exit 1
           fi
@@ -44,7 +44,7 @@ jobs:
           echo "Using Capacitor webDir: $WEB_DIR"
 
       - name: Install Capacitor
-        run: npm install --no-save @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+        run: bun add --no-save @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
 
       - name: Create Capacitor config
         shell: bash
@@ -65,7 +65,7 @@ jobs:
           EOF
 
       - name: Create Android project
-        run: npx cap add android
+        run: bunx cap add android
 
       - name: Add location permissions
         shell: bash
@@ -97,7 +97,7 @@ jobs:
           done
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: bunx cap sync android
 
       - name: Build debug APK
         working-directory: android
