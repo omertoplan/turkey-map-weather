@@ -25,15 +25,38 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Enable SPA shell for Android build
+      - name: Configure SPA-only Android build
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
+
           p = Path("vite.config.ts")
           s = p.read_text(encoding="utf-8")
-          needle = "  tanstackStart: {\n"
-          replacement = """  tanstackStart: {
+
+          start = s.find("  tanstackStart: {")
+          if start == -1:
+              raise SystemExit("Could not find tanstackStart config in vite.config.ts")
+
+          brace_start = s.find("{", start)
+          depth = 0
+          end = None
+          for i in range(brace_start, len(s)):
+              if s[i] == "{":
+                  depth += 1
+              elif s[i] == "}":
+                  depth -= 1
+                  if depth == 0:
+                      end = i + 1
+                      break
+
+          if end is None:
+              raise SystemExit("Could not parse tanstackStart config in vite.config.ts")
+
+          if end < len(s) and s[end] == ",":
+              end += 1
+
+          replacement = '''  tanstackStart: {
             spa: {
               enabled: true,
               prerender: {
@@ -42,12 +65,12 @@ jobs:
                 retryCount: 0,
               },
             },
-          """
-          if "spa:" not in s:
-              if needle not in s:
-                  raise SystemExit("Could not find tanstackStart config in vite.config.ts")
-              s = s.replace(needle, replacement, 1)
+          },'''
+
+          s = s[:start] + replacement + s[end:]
           p.write_text(s, encoding="utf-8")
+
+          print("Android SPA build config:")
           print(p.read_text(encoding="utf-8"))
           PY
 
