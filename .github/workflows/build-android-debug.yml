@@ -1,0 +1,112 @@
+name: Build Weather Map Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Find web build directory
+        shell: bash
+        run: |
+          set -e
+          INDEX_PATH="$(find . -type f -name index.html -not -path './node_modules/*' -not -path './android/*' | head -n 1)"
+          if [ -z "$INDEX_PATH" ]; then
+            echo "No static index.html was produced by the web build."
+            find . -maxdepth 3 -type d \( -name dist -o -name .output -o -name build \) -print || true
+            exit 1
+          fi
+          WEB_DIR="$(dirname "$INDEX_PATH")"
+          echo "WEB_DIR=$WEB_DIR" >> "$GITHUB_ENV"
+          echo "Using Capacitor webDir: $WEB_DIR"
+
+      - name: Install Capacitor
+        run: npm install --no-save @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+
+      - name: Create Capacitor config
+        shell: bash
+        run: |
+          cat > capacitor.config.ts <<EOF
+          import type { CapacitorConfig } from '@capacitor/cli';
+
+          const config: CapacitorConfig = {
+            appId: 'com.kawiq.weathermap',
+            appName: 'Weather Map – Hava Haritası',
+            webDir: '${WEB_DIR}',
+            android: {
+              allowMixedContent: false
+            }
+          };
+
+          export default config;
+          EOF
+
+      - name: Create Android project
+        run: npx cap add android
+
+      - name: Add location permissions
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('android/app/src/main/AndroidManifest.xml')
+          s = p.read_text(encoding='utf-8')
+          marker = '<application'
+          permissions = '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n'
+          if 'ACCESS_FINE_LOCATION' not in s:
+              s = s.replace(marker, permissions + marker, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Apply Weather Map icon
+        shell: bash
+        run: |
+          test -f public/app-icon.png
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick
+          for spec in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+            density="${spec%%:*}"
+            size="${spec##*:}"
+            dir="android/app/src/main/res/mipmap-${density}"
+            mkdir -p "$dir"
+            convert public/app-icon.png -resize "${size}x${size}" "$dir/ic_launcher.png"
+            convert public/app-icon.png -resize "${size}x${size}" "$dir/ic_launcher_round.png"
+          done
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: weather-map-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
