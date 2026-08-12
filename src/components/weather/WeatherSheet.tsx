@@ -57,6 +57,7 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (dragStart.current === null) return;
+    lastY.current = e.clientY;
     const dy = e.clientY - dragStart.current;
     if (Math.abs(dy) < THRESHOLD) return;
     dragStart.current = null;
@@ -65,13 +66,21 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
   const endDrag = () => {
     dragStart.current = null;
   };
+  // the browser can abort a pointer sequence mid-gesture; honour the movement so far
+  const onPointerCancel = () => {
+    if (dragStart.current === null) return;
+    const dy = lastY.current - dragStart.current;
+    dragStart.current = null;
+    if (Math.abs(dy) >= 20) setExpanded(dy < 0);
+  };
 
   const dragProps = {
     onPointerDown,
     onPointerMove,
     onPointerUp: endDrag,
-    onPointerCancel: endDrag,
+    onPointerCancel,
   };
+
 
 
 
