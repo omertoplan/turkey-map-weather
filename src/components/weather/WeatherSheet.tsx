@@ -38,49 +38,62 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
   }, [snapshot?.location.coords.lat, snapshot?.location.coords.lon]);
 
 
-  const THRESHOLD = 48;
+  const TAP_MAX = 12;
+  const SWIPE_MIN = 32;
 
   const isInteractive = (target: EventTarget | null) =>
     target instanceof Element &&
     !!target.closest("button, a, input, [role='tablist'], [data-no-drag]");
 
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (isInteractive(e.target)) {
-      dragStart.current = null;
+  const begin = (target: EventTarget | null, y: number) => {
+    if (isInteractive(target)) {
+      startY.current = null;
       return;
     }
-    dragStart.current = e.clientY;
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
+    startY.current = y;
+    lastY.current = y;
+  };
+
+  const move = (y: number) => {
+    if (startY.current === null) return;
+    lastY.current = y;
+  };
+
+  const finish = () => {
+    if (startY.current === null) return;
+    const dy = lastY.current - startY.current;
+    startY.current = null;
+    if (Math.abs(dy) <= TAP_MAX) {
+      setExpanded((v) => !v); // short tap toggles
+    } else if (Math.abs(dy) >= SWIPE_MIN) {
+      setExpanded(dy < 0);
     }
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (dragStart.current === null) return;
-    lastY.current = e.clientY;
-    const dy = e.clientY - dragStart.current;
-    if (Math.abs(dy) < THRESHOLD) return;
-    dragStart.current = null;
-    setExpanded(dy < 0);
-  };
-  const endDrag = () => {
-    dragStart.current = null;
-  };
-  // the browser can abort a pointer sequence mid-gesture; honour the movement so far
-  const onPointerCancel = () => {
-    if (dragStart.current === null) return;
-    const dy = lastY.current - dragStart.current;
-    dragStart.current = null;
-    if (Math.abs(dy) >= 32) setExpanded(dy < 0);
   };
 
   const dragProps = {
-    onPointerDown,
-    onPointerMove,
-    onPointerUp: endDrag,
-    onPointerCancel,
+    // native single-finger touch events
+    onTouchStart: (e: React.TouchEvent) => {
+      if (e.touches.length !== 1) {
+        startY.current = null;
+        return;
+      }
+      begin(e.target, e.touches[0]!.clientY);
+    },
+    onTouchMove: (e: React.TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      move(e.touches[0]!.clientY);
+    },
+    onTouchEnd: finish,
+    onTouchCancel: finish,
+    // mouse / pen fallback
+    onMouseDown: (e: React.MouseEvent) => begin(e.target, e.clientY),
+    onMouseMove: (e: React.MouseEvent) => move(e.clientY),
+    onMouseUp: finish,
+    onMouseLeave: () => {
+      startY.current = null;
+    },
   };
+
 
 
 
