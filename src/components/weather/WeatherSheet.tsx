@@ -108,7 +108,7 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
       aria-label="Konum hava durumu"
     >
       {/* grabber / header */}
-      <div className="shrink-0 cursor-grab touch-none px-5 pt-2.5" {...dragProps}>
+      <div className="shrink-0 cursor-grab touch-manipulation px-5 pt-2.5" {...dragProps}>
 
         <div className="mx-auto h-1.5 w-11 rounded-full bg-border" />
         <div className="mt-3 flex items-start gap-2">
@@ -156,7 +156,7 @@ export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props
         </div>
       ) : expanded ? (
         <>
-          <div className="shrink-0 touch-none px-5 pt-4" {...dragProps}>
+          <div className="shrink-0 touch-manipulation px-5 pt-4" {...dragProps}>
             <CurrentSummary snapshot={snapshot} />
             <div className="no-scrollbar mt-4 flex gap-1.5 overflow-x-auto rounded-full bg-secondary p-1">
               {TABS.map((t) => (
