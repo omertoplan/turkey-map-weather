@@ -25,8 +25,9 @@ interface Props {
 export function WeatherSheet({ snapshot, label, loading, error, onClose }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<TabKey>("now");
-  const dragStart = useRef<number | null>(null);
+  const startY = useRef<number | null>(null);
   const lastY = useRef(0);
+
 
   const title = label?.name ?? snapshot?.location.name;
   const subtitle = label?.region ?? snapshot?.location.region;
