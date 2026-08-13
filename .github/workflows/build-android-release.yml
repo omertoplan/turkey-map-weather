@@ -1,0 +1,112 @@
+name: Build Weather Map Android Release AAB
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install Capacitor
+        run: bun add --no-save @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+
+      - name: Create placeholder web directory
+        run: |
+          mkdir -p www
+          printf '%s\n' '<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Weather Map - Hava Haritası</title></head><body></body></html>' > www/index.html
+
+      - name: Create Capacitor config
+        run: |
+          cat > capacitor.config.ts <<'EOF'
+          import type { CapacitorConfig } from '@capacitor/cli';
+
+          const config: CapacitorConfig = {
+            appId: 'com.kawiq.weathermap',
+            appName: 'Weather Map - Hava Haritası',
+            webDir: 'www',
+            server: {
+              url: 'https://turkey-map-weather.lovable.app/',
+              cleartext: false
+            }
+          };
+
+          export default config;
+          EOF
+
+      - name: Create Android project
+        run: bunx cap add android
+
+      - name: Add location permissions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('android/app/src/main/AndroidManifest.xml')
+          s = p.read_text(encoding='utf-8')
+          marker = '<application'
+          permissions = '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n'
+          if 'ACCESS_FINE_LOCATION' not in s:
+              s = s.replace(marker, permissions + marker, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Apply Weather Map icon
+        run: |
+          test -f public/app-icon.png
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick
+          for spec in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+            density="${spec%%:*}"
+            size="${spec##*:}"
+            dir="android/app/src/main/res/mipmap-${density}"
+            mkdir -p "$dir"
+            convert public/app-icon.png -resize "${size}x${size}" "$dir/ic_launcher.png"
+            convert public/app-icon.png -resize "${size}x${size}" "$dir/ic_launcher_round.png"
+          done
+
+      - name: Sync Capacitor
+        run: bunx cap sync android
+
+      - name: Set Android API 36
+        run: |
+          sed -i 's/compileSdk = .*/compileSdk = 36/' android/variables.gradle
+          sed -i 's/targetSdk = .*/targetSdk = 36/' android/variables.gradle
+
+      - name: Restore signing keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.keystore
+
+      - name: Build signed release AAB
+        working-directory: android
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/android/app/release.keystore" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+
+      - name: Upload signed AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: weather-map-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
