@@ -6,7 +6,6 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -22,84 +21,26 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Configure SPA-only Android build
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p = Path("vite.config.ts")
-          s = p.read_text(encoding="utf-8")
-
-          start = s.find("  tanstackStart: {")
-          if start == -1:
-              raise SystemExit("Could not find tanstackStart config in vite.config.ts")
-
-          brace_start = s.find("{", start)
-          depth = 0
-          end = None
-          for i in range(brace_start, len(s)):
-              if s[i] == "{":
-                  depth += 1
-              elif s[i] == "}":
-                  depth -= 1
-                  if depth == 0:
-                      end = i + 1
-                      break
-
-          if end is None:
-              raise SystemExit("Could not parse tanstackStart config in vite.config.ts")
-
-          if end < len(s) and s[end] == ",":
-              end += 1
-
-          replacement = '''  tanstackStart: {
-            spa: {
-              enabled: true,
-              prerender: {
-                outputPath: "/index.html",
-                crawlLinks: false,
-                retryCount: 0,
-              },
-            },
-          },'''
-
-          s = s[:start] + replacement + s[end:]
-          p.write_text(s, encoding="utf-8")
-
-          print("Android SPA build config:")
-          print(p.read_text(encoding="utf-8"))
-          PY
-
-      - name: Build static SPA shell
-        run: bun run build
-
-      - name: Verify Android web output
-        shell: bash
-        run: |
-          set -e
-          test -f .output/public/index.html
-          echo "Static shell found:"
-          ls -lh .output/public/index.html
-
       - name: Install Capacitor
         run: bun add --no-save @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
 
+      - name: Create placeholder web directory
+        run: |
+          mkdir -p www
+          printf '%s\n' '<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Weather Map - Hava Haritası</title></head><body></body></html>' > www/index.html
+
       - name: Create Capacitor config
-        shell: bash
         run: |
           cat > capacitor.config.ts <<'EOF'
           import type { CapacitorConfig } from '@capacitor/cli';
 
           const config: CapacitorConfig = {
             appId: 'com.kawiq.weathermap',
-            appName: 'Weather Map – Hava Haritası',
-            webDir: '.output/public',
-            android: {
-              allowMixedContent: false
+            appName: 'Weather Map - Hava Haritası',
+            webDir: 'www',
+            server: {
+              url: 'https://turkey-map-weather.lovable.app/',
+              cleartext: false
             }
           };
 
@@ -110,7 +51,6 @@ jobs:
         run: bunx cap add android
 
       - name: Add location permissions
-        shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -124,7 +64,6 @@ jobs:
           PY
 
       - name: Apply Weather Map icon
-        shell: bash
         run: |
           test -f public/app-icon.png
           sudo apt-get update -qq
