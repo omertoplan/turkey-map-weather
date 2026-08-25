@@ -10,6 +10,7 @@ interface Props {
   onSelectPlace: (coords: Coords, label?: { name: string; region: string }) => void;
   onLocate: () => void;
   locating?: boolean;
+  onSearchOpenChange?: (open: boolean) => void;
 }
 
 
@@ -17,7 +18,7 @@ const DEFAULTS: GeoResult[] = PLACES.filter((p) => p.priority === 1)
   .slice(0, 5)
   .map((p) => ({ id: p.id, name: p.name, subtitle: p.region, coords: p.coords }));
 
-export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
+export function MapControls({ onSelectPlace, onLocate, locating, onSearchOpenChange }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -25,7 +26,9 @@ export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
-  }, [open]);
+    onSearchOpenChange?.(open);
+  }, [open, onSearchOpenChange]);
+
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 280);
@@ -45,7 +48,7 @@ export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
 
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4 pt-[max(0.85rem,env(safe-area-inset-top))]">
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-40 px-4 pt-[max(0.85rem,env(safe-area-inset-top))]">
       <div className="pointer-events-auto mx-auto flex max-w-md items-start gap-2">
         <div className="min-w-0 flex-1">
           <div

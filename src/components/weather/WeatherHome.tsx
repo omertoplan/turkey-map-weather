@@ -13,7 +13,9 @@ export function WeatherHome() {
   const [pickedLabel, setPickedLabel] = useState<PlaceLabel | null>(null);
   const [focus, setFocus] = useState<{ coords: Coords; zoom?: number } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+
 
   const citiesQuery = useQuery(weatherQueries.cities());
   const pointQuery = useQuery({
@@ -76,7 +78,13 @@ export function WeatherHome() {
         onPick={pick}
       />
 
-      <MapControls onSelectPlace={pickAndFocus} onLocate={locate} locating={locating} />
+      <MapControls
+        onSelectPlace={pickAndFocus}
+        onLocate={locate}
+        locating={locating}
+        onSearchOpenChange={setSearchOpen}
+      />
+
 
       {(notice || citiesQuery.isError) && (
         <div className="pointer-events-none absolute inset-x-0 top-[4.75rem] z-30 flex justify-center px-6">
@@ -97,17 +105,23 @@ export function WeatherHome() {
       )}
 
       {selected && (
-        <WeatherSheet
-          snapshot={pointQuery.data}
-          label={label}
-          loading={pointQuery.isPending}
-          error={pointQuery.isError}
-          onClose={() => {
-            setSelected(null);
-            setPickedLabel(null);
-          }}
-        />
+        <div
+          className={searchOpen ? "invisible pointer-events-none" : undefined}
+          aria-hidden={searchOpen || undefined}
+        >
+          <WeatherSheet
+            snapshot={pointQuery.data}
+            label={label}
+            loading={pointQuery.isPending}
+            error={pointQuery.isError}
+            onClose={() => {
+              setSelected(null);
+              setPickedLabel(null);
+            }}
+          />
+        </div>
       )}
+
     </main>
   );
 }
