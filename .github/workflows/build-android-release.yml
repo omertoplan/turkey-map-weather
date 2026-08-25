@@ -6,7 +6,6 @@ on:
 jobs:
   build-release:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -22,31 +21,19 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Install Capacitor
-        run: bun add --no-save @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+      - name: Install dependencies
+        run: bun install
 
-      - name: Create placeholder web directory
+      - name: Build standalone mobile bundle (dist/mobile)
+        run: bun run build:mobile
+
+      - name: Assert bundle is standalone
         run: |
-          mkdir -p www
-          printf '%s\n' '<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Weather Map - Hava Haritası</title></head><body></body></html>' > www/index.html
-
-      - name: Create Capacitor config
-        run: |
-          cat > capacitor.config.ts <<'EOF'
-          import type { CapacitorConfig } from '@capacitor/cli';
-
-          const config: CapacitorConfig = {
-            appId: 'com.kawiq.weathermap',
-            appName: 'Weather Map - Hava Haritası',
-            webDir: 'www',
-            server: {
-              url: 'https://turkey-map-weather.lovable.app/',
-              cleartext: false
-            }
-          };
-
-          export default config;
-          EOF
+          test -f dist/mobile/index.html
+          if grep -rq "lovable.app" dist/mobile; then
+            echo "dist/mobile still references lovable.app" >&2
+            exit 1
+          fi
 
       - name: Create Android project
         run: bunx cap add android
@@ -78,13 +65,14 @@ jobs:
             convert public/app-icon.png -resize "${size}x${size}" "$dir/ic_launcher_round.png"
           done
 
-      - name: Sync Capacitor
+      - name: Sync Capacitor (copies dist/mobile into the AAB assets)
         run: bunx cap sync android
 
       - name: Set Android API 36
         run: |
           sed -i 's/compileSdk = .*/compileSdk = 36/' android/variables.gradle
           sed -i 's/targetSdk = .*/targetSdk = 36/' android/variables.gradle
+          grep -E 'compileSdk|targetSdk' android/variables.gradle
 
       - name: Restore signing keystore
         run: |
