@@ -105,17 +105,23 @@ export function WeatherHome() {
       )}
 
       {selected && (
-        <WeatherSheet
-          snapshot={pointQuery.data}
-          label={label}
-          loading={pointQuery.isPending}
-          error={pointQuery.isError}
-          onClose={() => {
-            setSelected(null);
-            setPickedLabel(null);
-          }}
-        />
+        <div
+          className={searchOpen ? "invisible pointer-events-none" : undefined}
+          aria-hidden={searchOpen || undefined}
+        >
+          <WeatherSheet
+            snapshot={pointQuery.data}
+            label={label}
+            loading={pointQuery.isPending}
+            error={pointQuery.isError}
+            onClose={() => {
+              setSelected(null);
+              setPickedLabel(null);
+            }}
+          />
+        </div>
       )}
+
     </main>
   );
 }
