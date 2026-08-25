@@ -48,7 +48,7 @@ export function MapControls({ onSelectPlace, onLocate, locating, onSearchOpenCha
 
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-4 pt-[max(0.85rem,env(safe-area-inset-top))]">
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-40 px-4 pt-[max(0.85rem,env(safe-area-inset-top))]">
       <div className="pointer-events-auto mx-auto flex max-w-md items-start gap-2">
         <div className="min-w-0 flex-1">
           <div
