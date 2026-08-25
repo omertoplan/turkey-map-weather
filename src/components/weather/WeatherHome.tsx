@@ -13,7 +13,9 @@ export function WeatherHome() {
   const [pickedLabel, setPickedLabel] = useState<PlaceLabel | null>(null);
   const [focus, setFocus] = useState<{ coords: Coords; zoom?: number } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+
 
   const citiesQuery = useQuery(weatherQueries.cities());
   const pointQuery = useQuery({
