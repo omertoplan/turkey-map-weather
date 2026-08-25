@@ -78,7 +78,13 @@ export function WeatherHome() {
         onPick={pick}
       />
 
-      <MapControls onSelectPlace={pickAndFocus} onLocate={locate} locating={locating} />
+      <MapControls
+        onSelectPlace={pickAndFocus}
+        onLocate={locate}
+        locating={locating}
+        onSearchOpenChange={setSearchOpen}
+      />
+
 
       {(notice || citiesQuery.isError) && (
         <div className="pointer-events-none absolute inset-x-0 top-[4.75rem] z-30 flex justify-center px-6">
