@@ -10,6 +10,7 @@ interface Props {
   onSelectPlace: (coords: Coords, label?: { name: string; region: string }) => void;
   onLocate: () => void;
   locating?: boolean;
+  onSearchOpenChange?: (open: boolean) => void;
 }
 
 
@@ -17,7 +18,7 @@ const DEFAULTS: GeoResult[] = PLACES.filter((p) => p.priority === 1)
   .slice(0, 5)
   .map((p) => ({ id: p.id, name: p.name, subtitle: p.region, coords: p.coords }));
 
-export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
+export function MapControls({ onSelectPlace, onLocate, locating, onSearchOpenChange }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -25,7 +26,9 @@ export function MapControls({ onSelectPlace, onLocate, locating }: Props) {
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
-  }, [open]);
+    onSearchOpenChange?.(open);
+  }, [open, onSearchOpenChange]);
+
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 280);
