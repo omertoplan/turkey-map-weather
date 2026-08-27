@@ -73,8 +73,14 @@ jobs:
           sed -i 's/compileSdk = .*/compileSdk = 36/' android/variables.gradle
           sed -i 's/targetSdk = .*/targetSdk = 36/' android/variables.gradle
           grep -E 'compileSdk|targetSdk' android/variables.gradle
-
+      -
+      name: Set app version
+        run: |
+          sed -i 's/versionCode [0-9]*/versionCode 2/' android/app/build.gradle
+          sed -i 's/versionName "[^"]*"/versionName "1.1"/' android/app/build.gradle
+          grep -E 'versionCode|versionName' android/app/build.gradle
       - name: Restore signing keystore
+      
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.keystore
 
