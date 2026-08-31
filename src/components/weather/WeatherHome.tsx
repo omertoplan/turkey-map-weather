@@ -3,7 +3,9 @@ import { useCallback, useState } from "react";
 import { WeatherMap } from "@/components/map/WeatherMap";
 import { MapControls } from "@/components/map/MapControls";
 import { WeatherSheet } from "@/components/weather/WeatherSheet";
+import { MarineSheet } from "@/components/weather/MarineSheet";
 import { weatherQueries } from "@/lib/weather";
+import { marineQueries } from "@/lib/marine";
 import { reverseGeocode, type PlaceLabel } from "@/lib/map/geocode";
 import type { Coords } from "@/lib/weather/types";
 
@@ -23,6 +25,14 @@ export function WeatherHome() {
     enabled: selected !== null,
   });
 
+  // Marine probe: the Marine API returns nulls on land, so a real wave value
+  // is what tells us the tap landed on the sea.
+  const marineQuery = useQuery({
+    ...marineQueries.point(selected ?? { lat: 0, lon: 0 }),
+    enabled: selected !== null,
+  });
+  const isSea = marineQuery.data?.isSea === true;
+
   // reverse geocode only when we don't already have a label from search
   const reverseQuery = useQuery({
     queryKey: ["reverse-geocode", selected?.lat.toFixed(4) ?? "", selected?.lon.toFixed(4) ?? ""],
@@ -34,10 +44,16 @@ export function WeatherHome() {
 
   const label = pickedLabel ?? reverseQuery.data ?? null;
 
+
   const pick = useCallback((coords: Coords, nextLabel?: PlaceLabel) => {
     setNotice(null);
     setPickedLabel(nextLabel ?? null);
     setSelected(coords);
+  }, []);
+
+  const close = useCallback(() => {
+    setSelected(null);
+    setPickedLabel(null);
   }, []);
 
   const pickAndFocus = useCallback(
@@ -109,18 +125,26 @@ export function WeatherHome() {
           className={searchOpen ? "invisible pointer-events-none" : undefined}
           aria-hidden={searchOpen || undefined}
         >
-          <WeatherSheet
-            snapshot={pointQuery.data}
-            label={label}
-            loading={pointQuery.isPending}
-            error={pointQuery.isError}
-            onClose={() => {
-              setSelected(null);
-              setPickedLabel(null);
-            }}
-          />
+          {isSea ? (
+            <MarineSheet
+              snapshot={marineQuery.data}
+              label={label}
+              loading={marineQuery.isPending}
+              error={marineQuery.isError}
+              onClose={close}
+            />
+          ) : (
+            <WeatherSheet
+              snapshot={pointQuery.data}
+              label={label}
+              loading={pointQuery.isPending || marineQuery.isPending}
+              error={pointQuery.isError}
+              onClose={close}
+            />
+          )}
         </div>
       )}
+
 
     </main>
   );

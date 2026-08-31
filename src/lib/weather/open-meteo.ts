@@ -1,4 +1,5 @@
 import { describeCoords, PLACES } from "@/lib/map/places";
+import { windDirLabel } from "./direction";
 import type {
   CityWeather,
   Coords,
@@ -15,6 +16,9 @@ import type {
 
 const BASE = "https://api.open-meteo.com/v1/forecast";
 
+/** Open-Meteo serves up to 16 days; we request the 15-day horizon and render only real days. */
+const REQUESTED_DAYS = 15;
+
 /** WMO weather code -> app condition */
 export function conditionFromCode(code: number): WeatherCondition {
   if (code === 0) return "clear";
@@ -30,18 +34,20 @@ export function conditionFromCode(code: number): WeatherCondition {
   return "cloudy";
 }
 
-const DIRS = ["K", "KD", "D", "GD", "G", "GB", "B", "KB"] as const;
 function windDir(deg: number) {
-  return DIRS[Math.round((((deg % 360) + 360) % 360) / 45) % 8]!;
+  return windDirLabel(deg);
 }
 
 const round = (n: number | null | undefined, fallback = 0) =>
   typeof n === "number" && Number.isFinite(n) ? Math.round(n) : fallback;
 
+const isNum = (v: unknown) => typeof v === "number" && Number.isFinite(v);
+
 function hhmm(iso: string | undefined) {
   if (!iso) return "--:--";
   return iso.slice(11, 16);
 }
+
 
 function dayLabel(iso: string, index: number) {
   if (index === 0) return "Bugün";
@@ -82,7 +88,7 @@ export const openMeteoProvider: WeatherProvider = {
       `&current=${CURRENT_FIELDS}` +
       `&hourly=temperature_2m,weather_code,precipitation_probability,visibility,wind_speed_10m,wind_direction_10m` +
       `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset,wind_speed_10m_max,wind_direction_10m_dominant` +
-      `&timezone=auto&forecast_days=7`;
+      `&timezone=auto&forecast_days=${REQUESTED_DAYS}`;
 
     const data = await getJson<ForecastResponse>(url);
     const c = data.current ?? {};
@@ -107,16 +113,21 @@ export const openMeteoProvider: WeatherProvider = {
     });
 
     const dates = (d["time"] ?? []) as string[];
-    const daily = dates.map((date, i) => ({
-      date,
-      label: dayLabel(date, i),
-      min: round(d["temperature_2m_min"]?.[i] as number),
-      max: round(d["temperature_2m_max"]?.[i] as number),
-      condition: conditionFromCode(round(d["weather_code"]?.[i] as number)),
-      precipitationProbability: round(d["precipitation_probability_max"]?.[i] as number),
-      windSpeedMax: round(d["wind_speed_10m_max"]?.[i] as number),
-      windDirection: windDir(round(d["wind_direction_10m_dominant"]?.[i] as number)),
-    }));
+    const daily = dates
+      .map((date, i) => ({
+        date,
+        label: dayLabel(date, i),
+        real: isNum(d["temperature_2m_max"]?.[i]) && isNum(d["temperature_2m_min"]?.[i]),
+        min: round(d["temperature_2m_min"]?.[i] as number),
+        max: round(d["temperature_2m_max"]?.[i] as number),
+        condition: conditionFromCode(round(d["weather_code"]?.[i] as number)),
+        precipitationProbability: round(d["precipitation_probability_max"]?.[i] as number),
+        windSpeedMax: round(d["wind_speed_10m_max"]?.[i] as number),
+        windDirection: windDir(round(d["wind_direction_10m_dominant"]?.[i] as number)),
+      }))
+      // keep only days the provider really returned values for — no padding
+      .filter((e) => e.real)
+      .map(({ real: _real, ...e }) => e);
 
 
     const visibilityM = h["visibility"]?.[start] as number | undefined;

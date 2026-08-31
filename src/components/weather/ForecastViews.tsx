@@ -105,8 +105,8 @@ export function HourlyList({ snapshot }: { snapshot: WeatherSnapshot }) {
   );
 }
 
-export function DailyList({ snapshot, days }: { snapshot: WeatherSnapshot; days: number }) {
-  const list = snapshot.daily.slice(0, days);
+export function DailyList({ snapshot, days }: { snapshot: WeatherSnapshot; days?: number }) {
+  const list = days ? snapshot.daily.slice(0, days) : snapshot.daily;
   const min = Math.min(...list.map((d) => d.min));
   const max = Math.max(...list.map((d) => d.max));
   const span = Math.max(max - min, 1);
