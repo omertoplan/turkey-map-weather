@@ -16,8 +16,8 @@ import type {
 
 const BASE = "https://api.open-meteo.com/v1/forecast";
 
-/** Open-Meteo supports up to 16 forecast days; we render only the real ones. */
-const REQUESTED_DAYS = 16;
+/** Open-Meteo serves up to 16 days; we request the 15-day horizon and render only real days. */
+const REQUESTED_DAYS = 15;
 
 /** WMO weather code -> app condition */
 export function conditionFromCode(code: number): WeatherCondition {
