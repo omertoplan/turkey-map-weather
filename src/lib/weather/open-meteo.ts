@@ -1,4 +1,5 @@
 import { describeCoords, PLACES } from "@/lib/map/places";
+import { windDirLabel } from "./direction";
 import type {
   CityWeather,
   Coords,
@@ -15,6 +16,9 @@ import type {
 
 const BASE = "https://api.open-meteo.com/v1/forecast";
 
+/** Open-Meteo supports up to 16 forecast days; we render only the real ones. */
+const REQUESTED_DAYS = 16;
+
 /** WMO weather code -> app condition */
 export function conditionFromCode(code: number): WeatherCondition {
   if (code === 0) return "clear";
@@ -30,18 +34,20 @@ export function conditionFromCode(code: number): WeatherCondition {
   return "cloudy";
 }
 
-const DIRS = ["K", "KD", "D", "GD", "G", "GB", "B", "KB"] as const;
 function windDir(deg: number) {
-  return DIRS[Math.round((((deg % 360) + 360) % 360) / 45) % 8]!;
+  return windDirLabel(deg);
 }
 
 const round = (n: number | null | undefined, fallback = 0) =>
   typeof n === "number" && Number.isFinite(n) ? Math.round(n) : fallback;
 
+const isNum = (v: unknown) => typeof v === "number" && Number.isFinite(v);
+
 function hhmm(iso: string | undefined) {
   if (!iso) return "--:--";
   return iso.slice(11, 16);
 }
+
 
 function dayLabel(iso: string, index: number) {
   if (index === 0) return "Bugün";
