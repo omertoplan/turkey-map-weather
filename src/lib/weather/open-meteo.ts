@@ -88,7 +88,7 @@ export const openMeteoProvider: WeatherProvider = {
       `&current=${CURRENT_FIELDS}` +
       `&hourly=temperature_2m,weather_code,precipitation_probability,visibility,wind_speed_10m,wind_direction_10m` +
       `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset,wind_speed_10m_max,wind_direction_10m_dominant` +
-      `&timezone=auto&forecast_days=7`;
+      `&timezone=auto&forecast_days=${REQUESTED_DAYS}`;
 
     const data = await getJson<ForecastResponse>(url);
     const c = data.current ?? {};
