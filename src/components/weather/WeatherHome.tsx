@@ -120,18 +120,26 @@ export function WeatherHome() {
           className={searchOpen ? "invisible pointer-events-none" : undefined}
           aria-hidden={searchOpen || undefined}
         >
-          <WeatherSheet
-            snapshot={pointQuery.data}
-            label={label}
-            loading={pointQuery.isPending}
-            error={pointQuery.isError}
-            onClose={() => {
-              setSelected(null);
-              setPickedLabel(null);
-            }}
-          />
+          {isSea ? (
+            <MarineSheet
+              snapshot={marineQuery.data}
+              label={label}
+              loading={marineQuery.isPending}
+              error={marineQuery.isError}
+              onClose={close}
+            />
+          ) : (
+            <WeatherSheet
+              snapshot={pointQuery.data}
+              label={label}
+              loading={pointQuery.isPending || marineQuery.isPending}
+              error={pointQuery.isError}
+              onClose={close}
+            />
+          )}
         </div>
       )}
+
 
     </main>
   );
