@@ -8,12 +8,12 @@ export interface SheetTab {
 }
 
 interface Props {
-  title?: string;
-  subtitle?: string;
+  title?: string | undefined;
+  subtitle?: string | undefined;
   /** small icon shown next to the title (defaults to a map pin) */
   icon?: ReactNode;
   loading: boolean;
-  error?: boolean;
+  error?: boolean | undefined;
   errorText: string;
   ready: boolean;
   /** resets expand/tab state when this changes */
