@@ -113,16 +113,21 @@ export const openMeteoProvider: WeatherProvider = {
     });
 
     const dates = (d["time"] ?? []) as string[];
-    const daily = dates.map((date, i) => ({
-      date,
-      label: dayLabel(date, i),
-      min: round(d["temperature_2m_min"]?.[i] as number),
-      max: round(d["temperature_2m_max"]?.[i] as number),
-      condition: conditionFromCode(round(d["weather_code"]?.[i] as number)),
-      precipitationProbability: round(d["precipitation_probability_max"]?.[i] as number),
-      windSpeedMax: round(d["wind_speed_10m_max"]?.[i] as number),
-      windDirection: windDir(round(d["wind_direction_10m_dominant"]?.[i] as number)),
-    }));
+    const daily = dates
+      // keep only days the provider really returned values for — no padding
+      .filter(
+        (_, i) => isNum(d["temperature_2m_max"]?.[i]) && isNum(d["temperature_2m_min"]?.[i]),
+      )
+      .map((date, i) => ({
+        date,
+        label: dayLabel(date, i),
+        min: round(d["temperature_2m_min"]?.[i] as number),
+        max: round(d["temperature_2m_max"]?.[i] as number),
+        condition: conditionFromCode(round(d["weather_code"]?.[i] as number)),
+        precipitationProbability: round(d["precipitation_probability_max"]?.[i] as number),
+        windSpeedMax: round(d["wind_speed_10m_max"]?.[i] as number),
+        windDirection: windDir(round(d["wind_direction_10m_dominant"]?.[i] as number)),
+      }));
 
 
     const visibilityM = h["visibility"]?.[start] as number | undefined;
