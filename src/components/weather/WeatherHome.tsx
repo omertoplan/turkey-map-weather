@@ -51,6 +51,11 @@ export function WeatherHome() {
     setSelected(coords);
   }, []);
 
+  const close = useCallback(() => {
+    setSelected(null);
+    setPickedLabel(null);
+  }, []);
+
   const pickAndFocus = useCallback(
     (coords: Coords, nextLabel?: PlaceLabel) => {
       pick(coords, nextLabel);
