@@ -7,6 +7,7 @@ import { MarineSheet } from "@/components/weather/MarineSheet";
 import { weatherQueries } from "@/lib/weather";
 import { marineQueries } from "@/lib/marine";
 import { reverseGeocode, type PlaceLabel } from "@/lib/map/geocode";
+import { waterQueries } from "@/lib/map/water";
 import type { Coords } from "@/lib/weather/types";
 
 /** Shared main screen — rendered by both the web route and the mobile (Capacitor) entry. */
