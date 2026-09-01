@@ -19,6 +19,9 @@ export interface MarineCurrent {
   swellWavePeriod: Maybe;
   currentVelocity: Maybe;
   currentDirection: Maybe;
+  /** atmospheric wind (from the standard forecast API, NOT wind-wave) */
+  windSpeed: Maybe;
+  windDirection: Maybe;
 }
 
 export interface MarineHourlyEntry {
@@ -29,6 +32,8 @@ export interface MarineHourlyEntry {
   waveDirection: Maybe;
   seaSurfaceTemperature: Maybe;
   currentVelocity: Maybe;
+  windSpeed: Maybe;
+  windDirection: Maybe;
 }
 
 export interface MarineDailyEntry {
@@ -40,6 +45,8 @@ export interface MarineDailyEntry {
   waveDirection: Maybe;
   windWaveHeightMax: Maybe;
   swellWaveHeightMax: Maybe;
+  windSpeedMax: Maybe;
+  windDirectionDominant: Maybe;
 }
 
 export interface MarineSnapshot {
