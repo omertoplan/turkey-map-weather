@@ -146,7 +146,7 @@ export function WeatherHome() {
             <WeatherSheet
               snapshot={pointQuery.data}
               label={label}
-              loading={pointQuery.isPending || marineQuery.isPending}
+              loading={pointQuery.isPending || waterQuery.isPending}
               error={pointQuery.isError}
               onClose={close}
             />
