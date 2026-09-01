@@ -7,6 +7,7 @@ import { MarineSheet } from "@/components/weather/MarineSheet";
 import { weatherQueries } from "@/lib/weather";
 import { marineQueries } from "@/lib/marine";
 import { reverseGeocode, type PlaceLabel } from "@/lib/map/geocode";
+import { waterQueries } from "@/lib/map/water";
 import type { Coords } from "@/lib/weather/types";
 
 /** Shared main screen — rendered by both the web route and the mobile (Capacitor) entry. */
@@ -25,13 +26,21 @@ export function WeatherHome() {
     enabled: selected !== null,
   });
 
-  // Marine probe: the Marine API returns nulls on land, so a real wave value
-  // is what tells us the tap landed on the sea.
-  const marineQuery = useQuery({
-    ...marineQueries.point(selected ?? { lat: 0, lon: 0 }),
+  // Land/water classification comes from the rendered basemap pixel under the
+  // exact tapped coordinate — NOT from the Marine API, which snaps inland
+  // coordinates to the nearest ocean grid cell and would report "sea" on land.
+  const waterQuery = useQuery({
+    ...waterQueries.at(selected ?? { lat: 0, lon: 0 }),
     enabled: selected !== null,
   });
-  const isSea = marineQuery.data?.isSea === true;
+  const isWater = waterQuery.data === true;
+
+  // Marine data is only fetched once the coordinate is verified as water.
+  const marineQuery = useQuery({
+    ...marineQueries.point(selected ?? { lat: 0, lon: 0 }),
+    enabled: selected !== null && isWater,
+  });
+  const isSea = isWater && marineQuery.data?.isSea === true;
 
   // reverse geocode only when we don't already have a label from search
   const reverseQuery = useQuery({
@@ -137,7 +146,7 @@ export function WeatherHome() {
             <WeatherSheet
               snapshot={pointQuery.data}
               label={label}
-              loading={pointQuery.isPending || marineQuery.isPending}
+              loading={pointQuery.isPending || waterQuery.isPending}
               error={pointQuery.isError}
               onClose={close}
             />
