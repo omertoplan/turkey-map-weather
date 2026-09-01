@@ -1,4 +1,4 @@
-import { Compass, Navigation, Thermometer, Waves } from "lucide-react";
+import { Compass, Navigation, Thermometer, Waves, Wind } from "lucide-react";
 import { windDirLabel } from "@/lib/weather/direction";
 import type { Maybe, MarineSnapshot } from "@/lib/marine/types";
 
@@ -43,9 +43,17 @@ export function MarineMetricRow({ snapshot }: { snapshot: MarineSnapshot }) {
     { icon: Waves, label: "Dalga", value: fmt(current.waveHeight, "m") },
     { icon: Compass, label: "Yön", value: current.waveDirection === null ? NA : windDirLabel(current.waveDirection) },
     { icon: Thermometer, label: "Su", value: current.seaSurfaceTemperature === null ? NA : `${current.seaSurfaceTemperature.toFixed(1)}°` },
+    {
+      icon: Wind,
+      label: "Rüzgar",
+      value:
+        current.windSpeed === null
+          ? NA
+          : `${Math.round(current.windSpeed)} km/sa${current.windDirection === null ? "" : ` ${windDirLabel(current.windDirection)}`}`,
+    },
   ];
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       {items.map(({ icon: Icon, label, value }) => (
         <div key={label} className="rounded-2xl bg-secondary/70 px-3 py-2.5">
           <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -71,6 +79,8 @@ export function MarineNowDetail({ snapshot }: { snapshot: MarineSnapshot }) {
     { label: "Swell periyodu", value: fmt(c.swellWavePeriod, "s") },
     { label: "Akıntı hızı", value: fmt(c.currentVelocity, "km/sa") },
     { label: "Akıntı yönü", value: dir(c.currentDirection) },
+    { label: "Rüzgar hızı", value: c.windSpeed === null ? NA : `${Math.round(c.windSpeed)} km/sa` },
+    { label: "Rüzgar yönü", value: dir(c.windDirection) },
   ];
   return (
     <div className="space-y-3">
@@ -111,6 +121,11 @@ export function MarineHourlyList({ snapshot }: { snapshot: MarineSnapshot }) {
               {h.waveDirection === null ? NA : windDirLabel(h.waveDirection)}
               {" · "}
               {fmt(h.wavePeriod, "s")}
+            </p>
+            <p className="mt-0.5 flex items-center gap-1 truncate text-[0.72rem] font-semibold text-muted-foreground">
+              <Wind className="size-3 shrink-0" strokeWidth={2.4} />
+              {h.windSpeed === null ? NA : `${Math.round(h.windSpeed)} km/sa`}
+              {h.windDirection === null ? "" : ` · ${windDirLabel(h.windDirection)}`}
             </p>
           </div>
           <span className="w-16 shrink-0 text-right text-[0.75rem] font-semibold text-muted-foreground">
@@ -156,6 +171,11 @@ export function MarineDailyList({ snapshot }: { snapshot: MarineSnapshot }) {
                 {d.waveDirection === null ? NA : windDirLabel(d.waveDirection)}
                 {" · "}
                 {fmt(d.wavePeriodMax, "s")}
+              </p>
+              <p className="mt-0.5 flex items-center gap-1 truncate text-[0.7rem] font-semibold text-muted-foreground">
+                <Wind className="size-3 shrink-0" strokeWidth={2.4} />
+                {d.windSpeedMax === null ? NA : `${Math.round(d.windSpeedMax)} km/sa`}
+                {d.windDirectionDominant === null ? "" : ` · ${windDirLabel(d.windDirectionDominant)}`}
               </p>
             </div>
             <span className="w-20 shrink-0 text-right text-[0.72rem] font-semibold text-muted-foreground">
